@@ -140,10 +140,13 @@ def step(sim_state):
                     sim_state.move_vehicle(vid, target)
             
             elif vtype in [VehicleType.CargoShip, VehicleType.Airplane]:
+                #---------------- NOT Overseas ! --------------------#
+                #------ Current Location, Target Destination ------#
                 if not is_overseas(loc, target):
                     # Reached land, switch to land vehicle
-                    sim_state.unload_vehicle(vid, v["cargo"])
+                    sim_state.unload_vehicle(vid, v["cargo"]) #ERROR
                     boxes = sim_state.get_boxes()
+                    #--- Load cargo onto land vehicle ---#
                     for new_type in [VehicleType.Train, VehicleType.SemiTruck]:
                         try:
                             new_vid = sim_state.create_vehicle(new_type, loc)
@@ -152,6 +155,7 @@ def step(sim_state):
                             break
                         except ValueError:
                             continue
+                #--------------- OVERSEAS ! -------------------#
                 else:
                     sim_state.move_vehicle(vid, target)
         

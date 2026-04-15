@@ -68,7 +68,7 @@ def step(sim_state):
     vehicles = sim_state.get_vehicles()
     boxes = sim_state.get_boxes()
     
-    # Discover hubs from all box locations
+    # Discover hubs from all box locations !
     #--------------------Gives Location and destination to boxes-------------------------------#
     hubs = set()
     for box in boxes.values():

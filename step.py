@@ -62,30 +62,36 @@ def best_vehicle(num_boxes, distance_m, is_overseas_route):
         return VehicleType.SemiTruck
 
 def step(sim_state):
+    #-----------INITIALIZES SIM STATE-------------------#
+    #---------------------------------------------------#
     tick = sim_state.tick
     vehicles = sim_state.get_vehicles()
     boxes = sim_state.get_boxes()
     
     # Discover hubs from all box locations
+    #--------------------Gives Location and destination to boxes-------------------------------#
     hubs = set()
     for box in boxes.values():
         hubs.add(box["location"])
         hubs.add(box["destination"])
     hubs = list(hubs)
     
-    # ===== 1. UNLOAD =====
+    # #-------------------1. Unload ------------------------#
     for vid, v in vehicles.items():
+        #-------------If vehicle has no destination && theres cargo onboard, UNLOAD----------------#
         if v["destination"] is None and v["cargo"]:
             to_unload = [
                 bid for bid in v["cargo"]
                 if distance_m(v["location"], boxes[bid]["destination"]) <= _PROXIMITY_M
             ]
             if to_unload:
+                #---------------- VEHICLE ID, CARGO TO UNLOAD ----------------#
                 sim_state.unload_vehicle(vid, to_unload)
-                boxes = sim_state.get_boxes()  # Refresh
+                boxes = sim_state.get_boxes()  # REFRESH
     
     # ===== 2. MANAGE EXISTING VEHICLES =====
     for vid, v in vehicles.items():
+        #------------- IF Vehicle HAS a destination CONTINUE ONWARD! ------------#
         if v["destination"] is not None:
             continue  # Still moving
         
@@ -95,6 +101,7 @@ def step(sim_state):
         
         # Load boxes at current location
         if capacity_left > 0:
+            #-----------Loadable is a boolean I think? __Checks to see if there is space--------------#
             loadable = [
                 bid for bid, box in boxes.items()
                 if not box["delivered"] and box["vehicle_id"] is None

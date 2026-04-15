@@ -1,32 +1,58 @@
-# my_strategy.py
 from simulator import VehicleType
+import math
+
+def distance(coord1, coord2):
+    lat1 = math.radians(coord1[0])
+    long1 = math.radians(coord2[0])
+    lat2 = math.radians(coord1[1])
+    long2 = math.radians(coord2[1])
+    
+    #return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
 
 def step(sim_state):
-    """Called by the simulator every tick."""
-    tick     = sim_state.tick
-    vehicles = sim_state.get_vehicles()   # read-only snapshot
-    boxes    = sim_state.get_boxes()      # read-only snapshot
-
-    if tick == 0:
-        # Create a semi-truck at the Los Angeles hub
-        vid = sim_state.create_vehicle(VehicleType.SemiTruck, (33.9425, -118.4081))
-
-        # Load boxes that are at this location (costs 1 pt each)
-        nearby = [bid for bid, b in boxes.items() if b["location"] == (33.9425, -118.4081)]
-        sim_state.load_vehicle(vid, nearby)
-
-        # Drive toward New York
-        sim_state.move_vehicle(vid, (40.6413, -73.7781))
-
+    # Unload first - always check for deliveries
+    vehicles = sim_state.get_vehicles()
+    boxes = sim_state.get_boxes()
+    
     for vid, v in vehicles.items():
-        # When the truck arrives, unload boxes destined for this location
         if v["destination"] is None and v["cargo"]:
-            loc = v["location"]
-            to_drop = [bid for bid in v["cargo"] if boxes[bid]["destination"] == loc]
-            if to_drop:
-                sim_state.unload_vehicle(vid, to_drop)
-
-        # Optional: inspect currently active scenario events
-        active_events = sim_state.get_active_events()
-        for event in active_events:
-          print(event["type"], event["remaining_ticks"])
+            to_unload = [bid for bid in v["cargo"] 
+                        if distance(boxes[bid]["destination"], v["location"]) < 0.0005]
+            if to_unload:
+                sim_state.unload_vehicle(vid, to_unload)
+    
+    # Only spawn vehicles at tick 0 or when needed
+    if sim_state.tick == 0:
+        for bid, box in boxes.items():
+            if not box["delivered"] and box["vehicle_id"] is None:
+                # Direct route - no hub hopping
+                dist = distance(box["location"], box["destination"])
+                
+                # Choose cheapest vehicle that can do the job
+                if dist > 0.5:  # Long distance
+                    vtype = VehicleType.Train  # 0.02/km
+                else:  # Short distance
+                    vtype = VehicleType.SemiTruck  # 0.05/km
+                
+                try:
+                    vid = sim_state.create_vehicle(vtype, box["location"])
+                    sim_state.load_vehicle(vid, [bid])
+                    sim_state.move_vehicle(vid, box["destination"])
+                except ValueError:
+                    # Try truck if train fails
+                    try:
+                        vid = sim_state.create_vehicle(VehicleType.SemiTruck, box["location"])
+                        sim_state.load_vehicle(vid, [bid])
+                        sim_state.move_vehicle(vid, box["destination"])
+                    except ValueError:
+                        pass
+    
+    # For vehicles that arrived but not at destination (wrong facility)
+    for vid, v in vehicles.items():
+        if v["destination"] is None and v["cargo"]:
+            # Move to actual destination
+            for bid in v["cargo"]:
+                dest = boxes[bid]["destination"]
+                if distance(dest, v["location"]) > 0.0005:
+                    sim_state.move_vehicle(vid, dest)
+                    break

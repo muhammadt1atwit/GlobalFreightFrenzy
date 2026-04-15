@@ -6,6 +6,19 @@ def distance(coord1, coord2):
     long1 = math.radians(coord2[0])
     lat2 = math.radians(coord1[1])
     long2 = math.radians(coord2[1])
+
+    #calculate the deltas
+    delta_lat = lat2 - lat1
+    delta_long = long2 - long1
+
+    #Haversine Formula
+    a = math.sin(delta_lat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    R = 6371.0
+    distance = R * c
+    
+    return distance
     
     #return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
 

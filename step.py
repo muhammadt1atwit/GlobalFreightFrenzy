@@ -2,7 +2,7 @@ from simulator import VehicleType, haversine_distance_meters
 from collections import defaultdict
 import math
 
-_PROXIMITY_M = 50.0
+_PROXIMITY_M = 5000
 
 # Vehicle capabilities and restrictions
 VEHICLE_RESTRICTIONS = {

@@ -1,4 +1,4 @@
-=from simulator import VehicleType, haversine_distance_meters
+from simulator import VehicleType, haversine_distance_meters
 from collections import defaultdict
 
 _PROXIMITY_M = 5000.0
